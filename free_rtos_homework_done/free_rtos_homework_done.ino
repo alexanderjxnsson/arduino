@@ -1,5 +1,4 @@
 #include <Arduino_FreeRTOS.h>
-#include <stdio.h>
 
 #define RED 6
 #define YELLOW 7
@@ -42,9 +41,10 @@ void toggleRED_YELLOW(void *pvParameters){
     delay(250);
     digitalWrite(RED, LOW);
     digitalWrite(YELLOW, LOW);
-    delay(5000);
+    delay(500);
 
     if (REDprofiler == 10 || YELLOWprofiler == 10) {
+      Serial.print("RED & YELLOW suspended\n");
       vTaskSuspend(NULL);
     }
   }
@@ -62,9 +62,10 @@ void toggleRED_YELLOW(void *pvParameters){
     digitalWrite(GREEN, HIGH);
     delay(250);
     digitalWrite(GREEN, LOW);
-    delay(5000);
+    delay(500);
     
     if (GREENprofiler == 20) {
+      Serial.print("GREEN suspended\n");
       vTaskSuspend(NULL);
     }
   }
