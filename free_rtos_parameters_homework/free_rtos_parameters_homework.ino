@@ -9,14 +9,24 @@
 
 typedef struct LED_struct{
   uint8_t sPIN;
-  uint8_t sDELAY;
+  int sDELAY;
 } sLEDS;
+
+bool debug_flag = true;
 
 void setup() {
   Serial.begin(9600);
   sLEDS sRED = {RED_PIN, 500};
   sLEDS sYELLOW = {YELLOW_PIN, 200};
   sLEDS sGREEN = {GREEN_PIN, 1000};
+
+  Serial.println("SETUP: ");
+  Serial.println(sRED.sPIN);
+  Serial.println(sRED.sDELAY);
+  Serial.println(sYELLOW.sPIN);
+  Serial.println(sYELLOW.sDELAY);
+  Serial.println(sGREEN.sPIN);
+  Serial.println(sGREEN.sDELAY);
 
   xTaskCreate(LED_struct, "Toggle LED via struct", 128, (void *)&sRED, 1, NULL);
   xTaskCreate(LED_struct, "Toggle LED via struct", 128, (void *)&sYELLOW, 1, NULL);
@@ -25,10 +35,18 @@ void setup() {
 
 void LED_struct(void *xStruct){
   while(1){
-    sLEDS * local_struct = (sLEDS *) xStruct;
+    sLEDS * local_struct = (sLEDS *) &xStruct;
     pinMode(RED_PIN, OUTPUT);
     pinMode(YELLOW_PIN, OUTPUT);
     pinMode(GREEN_PIN, OUTPUT);
+
+    if (debug_flag == true) {
+      Serial.println("DEBUG: ");
+      Serial.print("PIN: ");
+      Serial.println(local_struct->sPIN);
+      Serial.print("DELAY: ");
+      Serial.println(local_struct->sDELAY);
+    }
 
     digitalWrite(local_struct->sPIN, HIGH);
     delay(250);
@@ -38,4 +56,5 @@ void LED_struct(void *xStruct){
 }
 
 void loop() {
+
 }
