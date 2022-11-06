@@ -8,7 +8,7 @@
 
 
 typedef struct LED_struct{
-  uint8_t sPIN;
+  int sPIN;
   int sDELAY;
 } sLEDS;
 
@@ -28,33 +28,30 @@ void setup() {
   Serial.println(sGREEN.sPIN);
   Serial.println(sGREEN.sDELAY);
 
-  xTaskCreate(LED_struct, "Toggle LED via struct", 128, (void *)&sRED, 1, NULL);
-  xTaskCreate(LED_struct, "Toggle LED via struct", 128, (void *)&sYELLOW, 1, NULL);
-  xTaskCreate(LED_struct, "Toggle LED via struct", 128, (void *)&sGREEN, 1, NULL);
+  xTaskCreate(toggle_LED, "Toggle LED via struct", 128, &sRED, 1, NULL);
+  xTaskCreate(toggle_LED, "Toggle LED via struct", 128, &sYELLOW, 1, NULL);
+  xTaskCreate(toggle_LED, "Toggle LED via struct", 128, &sGREEN, 1, NULL);
 }
 
-void LED_struct(void *xStruct){
+void toggle_LED(struct LED_struct *xStruct){
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(YELLOW_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
   while(1){
-    sLEDS * local_struct = (sLEDS *) &xStruct;
-    pinMode(RED_PIN, OUTPUT);
-    pinMode(YELLOW_PIN, OUTPUT);
-    pinMode(GREEN_PIN, OUTPUT);
-
     if (debug_flag == true) {
       Serial.println("DEBUG: ");
       Serial.print("PIN: ");
-      Serial.println(local_struct->sPIN);
+      Serial.println(xStruct->sPIN);
       Serial.print("DELAY: ");
-      Serial.println(local_struct->sDELAY);
+      Serial.println(xStruct->sDELAY);
     }
 
-    digitalWrite(local_struct->sPIN, HIGH);
+    digitalWrite(xStruct->sPIN, HIGH);
     delay(250);
-    digitalWrite(local_struct->sPIN, LOW);
-    delay(local_struct->sDELAY);
+    digitalWrite(xStruct->sPIN, LOW);
+    delay(xStruct->sDELAY);
   }
 }
 
 void loop() {
-
 }
