@@ -42,10 +42,11 @@ void toggle_LED(uint16_t *arr){
 
   if (debug_flag) {
     Serial.println("FUNCTION: ");
-    for (int x = 0; x < 6; x++) {
-        Serial.println(arr[x]);
+    for (int x = 0; x < sizeof(local_array); x++) {
+        Serial.println(local_array[x]);
     }
   }
+  
 }
 
 void loop() {}
