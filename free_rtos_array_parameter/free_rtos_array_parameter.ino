@@ -11,11 +11,18 @@ uint16_t task_array[3][2] = {{RED_PIN, 200},
                             {YELLOW_PIN, 500},
                             {GREEN_PIN, 1000}};
 
+uint16_t array1[6] = {RED_PIN, 200,
+                      YELLOW_PIN, 500,
+                      GREEN_PIN, 1000};
+
 void setup() {
   Serial.begin(9600);
 
-  if (debug_flag) {
-    Serial.println("SETUP: ");
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(YELLOW_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+
+  if (debug_flag == true) {
     for (int x = 0; x < 3; x++) {
       for (int y = 0; y < 2; y++) {
         Serial.println(task_array[x][y]);
@@ -24,10 +31,22 @@ void setup() {
 
   }
   // for loop för varje, kanske inte.
-  /* xTaskCreate(toggle_LED, "Toggle leds via array", 128, &task_array[0][0], NULL);
-  xTaskCreate(toggle_LED, "Toggle leds via array", 128, &task_array[1][1], NULL);
-  xTaskCreate(toggle_LED, "Toggle leds via array", 128, &task_array[2][2], NULL); */
+  for (int x = 0; x < 6; x++){
+    xTaskCreate(toggle_LED, "Toggle leds via array", 128, &array1, 1, NULL);
+  }
+
 }
 
+void toggle_LED(uint16_t *arr){
+  uint16_t* local_array = (uint16_t *) arr;
+
+  if (debug_flag) {
+    Serial.println("FUNCTION: ");
+    for (int x = 0; x < sizeof(local_array); x++) {
+        Serial.println(local_array[x]);
+    }
+  }
+  
+}
 
 void loop() {}
