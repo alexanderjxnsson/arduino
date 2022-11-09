@@ -23,40 +23,52 @@ void setup() {
 }
 
 void bRED(void* parameter){
+  BaseType_t qStatus;
+  TickType_t xTickToWait = pdMS_TO_TICKS(100);
+  uint32_t payloadToSend;
 
+  while (1) {
+    payloadToSend = 1;
+    if (uxQueueSpacesAvailable(iQueue) >= 1) {
+      qStatus = xQueueSend(iQueue, &payloadToSend, 100);
+      payloadToSend = 0;
+    }
+    else {Serial.println("Queue is full!");}
+  }
 }
 
 void bGREEN(void* parameter){
-  
-}
-
-/* void vSender(void* parameter){
-  // create parameter for return value of Queue send
   BaseType_t qStatus;
   TickType_t xTickToWait = pdMS_TO_TICKS(100);
-  uint32_t payloadToSend = 2022;
+  uint32_t payloadToSend = 1;
 
   while (1) {
-    // send payload to iQueue
+    payloadToSend = 1;
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
-      qStatus = xQueueSend(iQueue, &payloadToSend, xTickToWait);
-      payloadToSend += 10;
+      qStatus = xQueueSend(iQueue, &payloadToSend, 100);
+      payloadToSend = 0;
     }
-    else {Serial.println("Queue is  full!");}
+    else {Serial.println("Queue is full!");}
   }
-} */
+}
+
 
 void vReceiver(void* parameter){
   // declaration to payload will be recieved
   uint32_t payloadToReceive;
   BaseType_t qStatus;
   TickType_t xTickToWait = pdMS_TO_TICKS(100);
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
 
   while (1) {
-    qStatus = xQueueReceive(iQueue, &payloadToReceive, xTickToWait);
+    qStatus = xQueueReceive(iQueue, &payloadToReceive, 100);
     if (qStatus == pdPASS) {
       Serial.print("Received value is :");
       Serial.println(payloadToReceive);
+
+      // turn leds on and off
+
     }
     else {Serial.println("!!!-Error receving-!!!");}
   }
