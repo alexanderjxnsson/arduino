@@ -24,31 +24,29 @@ void setup() {
 
 void bRED(void* parameter){
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(100);
-  uint32_t payloadToSend;
+  TickType_t xTickToWait = pdMS_TO_TICKS(300);
+  uint32_t payloadToSend = 0;
 
   while (1) {
-    payloadToSend = 1;
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
-      qStatus = xQueueSend(iQueue, &payloadToSend, 100);
-      payloadToSend = 0;
+      qStatus = xQueueSend(iQueue, &payloadToSend, xTickToWait);
     }
-    else {Serial.println("Queue is full!");}
+    else {Serial.println("Queue is full from red!");}
+    vTaskDelay(xTickToWait);
   }
 }
 
 void bGREEN(void* parameter){
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(100);
+  TickType_t xTickToWait = pdMS_TO_TICKS(300);
   uint32_t payloadToSend = 1;
 
   while (1) {
-    payloadToSend = 1;
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
-      qStatus = xQueueSend(iQueue, &payloadToSend, 100);
-      payloadToSend = 0;
+      qStatus = xQueueSend(iQueue, &payloadToSend, xTickToWait);
     }
-    else {Serial.println("Queue is full!");}
+    else {Serial.println("Queue is full from green!");}
+    vTaskDelay(xTickToWait);
   }
 }
 
@@ -57,18 +55,33 @@ void vReceiver(void* parameter){
   // declaration to payload will be recieved
   uint32_t payloadToReceive;
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(100);
+  TickType_t xTickToWait = pdMS_TO_TICKS(300);
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
 
   while (1) {
-    qStatus = xQueueReceive(iQueue, &payloadToReceive, 100);
+    qStatus = xQueueReceive(iQueue, &payloadToReceive, xTickToWait);
+
     if (qStatus == pdPASS) {
       Serial.print("Received value is :");
       Serial.println(payloadToReceive);
-
-      // turn leds on and off
-
+      switch (payloadToReceive){
+        case 0:
+          Serial.println("RED LIGHT ON");
+          digitalWrite(RED_PIN, HIGH);
+          delay(100);
+          digitalWrite(RED_PIN, LOW);
+          break;
+        case 1:
+          Serial.println("GREEN LIGHT ON");
+          digitalWrite(GREEN_PIN, HIGH);
+          delay(100);
+          digitalWrite(GREEN_PIN, LOW);
+          break;
+        default:
+          Serial.println("Invalid input!");
+          break;
+      }
     }
     else {Serial.println("!!!-Error receving-!!!");}
   }
