@@ -6,26 +6,29 @@
 #define GREEN_PIN   8
 
 QueueHandle_t iQueue;
+TickType_t xTickToWait = pdMS_TO_TICKS(300);
 
 void setup() {
   Serial.begin(9600);
   // Created queue
   iQueue = xQueueCreate(5, sizeof(uint32_t));
   if (iQueue != NULL) {
-    xTaskCreate(bRED, "Red sender", 128, NULL, 1, NULL);
-    xTaskCreate(bGREEN, "Green sender", 128, NULL, 1, NULL);
-    xTaskCreate(vReceiver, "Reciver task", 128, NULL, 1, NULL);
+    xTaskCreate(bRED, "Red sender", 128, 0, 1, NULL);
+    xTaskCreate(bGREEN, "Green sender", 128, 1, 1, NULL);
+    //xTaskCreate(vSender, "Sender", 128, 1 || 0, 1, NULL);
+    //xTaskCreate(vSender, "Sender", 128, 1 || 0, 1, NULL);
+    xTaskCreate(vReceiver, "Reciver task", 128, NULL, 2, NULL);
+    void led_on_off(uint8_t GPIO);
   }
   else{
     for(;;){}
   }
-  
 }
 
 void bRED(void* parameter){
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(300);
-  uint32_t payloadToSend = 0;
+
+  uint8_t payloadToSend = (uint8_t)parameter;
 
   while (1) {
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
@@ -38,8 +41,8 @@ void bRED(void* parameter){
 
 void bGREEN(void* parameter){
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(300);
-  uint32_t payloadToSend = 1;
+  
+  uint8_t payloadToSend = (uint8_t)payloadToSend;
 
   while (1) {
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
@@ -55,7 +58,7 @@ void vReceiver(void* parameter){
   // declaration to payload will be recieved
   uint32_t payloadToReceive;
   BaseType_t qStatus;
-  TickType_t xTickToWait = pdMS_TO_TICKS(300);
+
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
 
@@ -68,15 +71,11 @@ void vReceiver(void* parameter){
       switch (payloadToReceive){
         case 0:
           Serial.println("RED LIGHT ON");
-          digitalWrite(RED_PIN, HIGH);
-          delay(100);
-          digitalWrite(RED_PIN, LOW);
+          led_on_off(RED_PIN);
           break;
         case 1:
           Serial.println("GREEN LIGHT ON");
-          digitalWrite(GREEN_PIN, HIGH);
-          delay(100);
-          digitalWrite(GREEN_PIN, LOW);
+          led_on_off(GREEN_PIN);
           break;
         default:
           Serial.println("Invalid input!");
@@ -85,6 +84,12 @@ void vReceiver(void* parameter){
     }
     else {Serial.println("!!!-Error receving-!!!");}
   }
+}
+
+void led_on_off(uint8_t GPIO){
+  digitalWrite(GPIO, HIGH);
+  delay(100);
+  digitalWrite(GPIO, LOW);
 }
 
 void loop() {}
