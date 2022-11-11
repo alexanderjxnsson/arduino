@@ -4,7 +4,7 @@
 #define YELLOW 7
 #define GREEN 8
 
-const TickType_t _50ms = pdMS_TO_TICKS(50);
+const TickType_t _300ms = pdMS_TO_TICKS(300);
 
 typedef int TaskProfiler;
 TaskProfiler REDprofiler = 0;
@@ -18,16 +18,16 @@ TaskHandle_t red_Handle , yellow_Handle, green_Handle;
 void setup() {
   Serial.begin(9600);
 
-  xTaskCreate(toggleRED, "Toggle RED LED", 128, NULL, 1, &red_Handle);
-  xTaskCreate(toggleYELLOW, "Toggle YELLOW LED", 128, NULL, 1, &yellow_Handle);
-  xTaskCreate(toggleGREEN, "Toggle GREEN LED", 128, NULL, 1, &green_Handle);
+  xTaskCreate(red_master, "Toggle RED LED", 128, NULL, 1, &red_Handle);
+  xTaskCreate(yellow_slave, "Toggle YELLOW LED", 128, NULL, 1, &yellow_Handle);
+  xTaskCreate(green_slave, "Toggle GREEN LED", 128, NULL, 1, &green_Handle);
   void led_on_off(int GPIO);
 }
 
 
-void toggleRED(void *pvParameters){
+void red_master(void *pvParameters){
   pinMode(RED, OUTPUT);
-  
+
   while (1) {
     yellow_exec_cycle++;
     green_exec_cycle++;
@@ -53,12 +53,13 @@ void toggleRED(void *pvParameters){
       green_exec_cycle = 0;
     }
     led_on_off(RED);
-    vTaskDelay(_50ms);
+    vTaskDelay(_300ms);
   }
 }
 
- void toggleYELLOW(void *pvParameters){
+ void yellow_slave(void *pvParameters){
   pinMode(YELLOW, OUTPUT);
+  
   while(1){
     YELLOWprofiler++;
     Serial.print("[YELLOW P] = ");
@@ -66,11 +67,11 @@ void toggleRED(void *pvParameters){
 
     led_on_off(YELLOW);
     
-    vTaskDelay(_50ms);
+    vTaskDelay(_300ms);
   }
 }
 
-void toggleGREEN(void *pvParameters){
+void green_slave(void *pvParameters){
   pinMode(GREEN, OUTPUT);
 
   while (1) {
@@ -79,7 +80,7 @@ void toggleGREEN(void *pvParameters){
     Serial.println(GREENprofiler);
 
     led_on_off(GREEN);
-    vTaskDelay(_50ms);
+    vTaskDelay(_300ms);
   }
 }
 
