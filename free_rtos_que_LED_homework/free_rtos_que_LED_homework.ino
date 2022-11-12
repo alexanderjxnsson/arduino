@@ -9,14 +9,14 @@ QueueHandle_t iQueue;
 TickType_t xTickToWait = pdMS_TO_TICKS(300);
 
 void setup() {
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
   Serial.begin(9600);
   // Created queue
-  iQueue = xQueueCreate(5, sizeof(uint32_t));
+  iQueue = xQueueCreate(5, sizeof(uint8_t));
   if (iQueue != NULL) {
-    xTaskCreate(bRED, "Red sender", 128, 0, 1, NULL);
-    xTaskCreate(bGREEN, "Green sender", 128, 1, 1, NULL);
-    //xTaskCreate(vSender, "Sender", 128, 1 || 0, 1, NULL);
-    //xTaskCreate(vSender, "Sender", 128, 1 || 0, 1, NULL);
+    xTaskCreate(vSender, "bRED", 128, 0, 1, NULL);
+    xTaskCreate(vSender, "bGREEN", 128, 1, 1, NULL);
     xTaskCreate(vReceiver, "Reciver task", 128, NULL, 2, NULL);
     void led_on_off(uint8_t GPIO);
   }
@@ -25,42 +25,27 @@ void setup() {
   }
 }
 
-void bRED(void* parameter){
+void vSender(void* parameter){
   BaseType_t qStatus;
-
   uint8_t payloadToSend = (uint8_t)parameter;
 
   while (1) {
     if (uxQueueSpacesAvailable(iQueue) >= 1) {
       qStatus = xQueueSend(iQueue, &payloadToSend, xTickToWait);
+      if (qStatus == pdPASS) {
+        Serial.print("Sent: ");
+        Serial.println(payloadToSend);
+      }
     }
-    else {Serial.println("Queue is full from red!");}
+    else {Serial.println("Queue is full");}
     vTaskDelay(xTickToWait);
   }
 }
-
-void bGREEN(void* parameter){
-  BaseType_t qStatus;
-  
-  uint8_t payloadToSend = (uint8_t)payloadToSend;
-
-  while (1) {
-    if (uxQueueSpacesAvailable(iQueue) >= 1) {
-      qStatus = xQueueSend(iQueue, &payloadToSend, xTickToWait);
-    }
-    else {Serial.println("Queue is full from green!");}
-    vTaskDelay(xTickToWait);
-  }
-}
-
 
 void vReceiver(void* parameter){
   // declaration to payload will be recieved
-  uint32_t payloadToReceive;
+  uint8_t payloadToReceive;
   BaseType_t qStatus;
-
-  pinMode(RED_PIN, OUTPUT);
-  pinMode(GREEN_PIN, OUTPUT);
 
   while (1) {
     qStatus = xQueueReceive(iQueue, &payloadToReceive, xTickToWait);
