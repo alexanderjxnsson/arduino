@@ -7,11 +7,14 @@
 
 QueueHandle_t iQueue;
 TickType_t xTickToWait = pdMS_TO_TICKS(300);
+TaskHandle_t red_Handle, green_Handle;
 
 void setup() {
   Serial.begin(9600);
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
+
+  void led_on_off(uint8_t GPIO);
 
   iQueue = xQueueCreate(5, sizeof(uint8_t));
   if (iQueue != NULL){
@@ -42,7 +45,39 @@ void vSender(void * param){
 }
 
 void vReceiver(void * param){
+  BaseType_t qStatus;
+  uint8_t payloadToReceive;
 
+  while (1) {
+    qStatus = xQueueReceive(iQueue, &payloadToReceive, xTicksToWait);
+    if (qStatus == pdPASS) {
+      Serial.print("Received value is: ");
+      Serial.println(payloadToReceive);
+
+      switch (payloadToReceive) {
+        case 0:
+          Serial.println("RED LIGHT ON");
+          led_on_off(RED_PIN);
+          break;
+        case 1:
+          Serial.println("GREEN LIGHT ON");
+          led_on_off(GREEN_PIN);
+          break;
+        default:
+          Serial.println("Invalid input!");
+          break;
+      } // switch // if
+    }
+    else {
+      Serial.println("!!!-Error receving-!!!"); 
+    } // else
+  } // while  
+} // func
+
+void led_on_off(uint8_t GPIO){
+  digitalWrite(GPIO, HIGH);
+  delay(100);
+  digitalWrite(GPIO, LOW);
 }
 
 void loop() {}
