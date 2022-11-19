@@ -15,6 +15,7 @@ typedef struct {
 #define PRINT_DELAY (pdMS_TO_TICKS(1000)) // Delay set to 1000ms(1sec), easier to calculate disc spin degree.
 
 // Here we've initilaized the different programs of the microwave from the struct
+// First we add program time in ms, door, lamp, effect and then disc
 sMicrowave defrost_meat = {300000, 0, 0, 800, 0};
 sMicrowave defrost_veg = {60000, 0, 0, 400, 0};
 sMicrowave general_prog = {30000, 0, 0, 800, 0};
@@ -22,6 +23,7 @@ sMicrowave general_prog = {30000, 0, 0, 800, 0};
 void setup() {
   Serial.begin(9600);
 
+  // Creating our tasks
   xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, NULL);
   xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, NULL);
   xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, NULL);
@@ -30,8 +32,9 @@ void setup() {
 void microwave_output(void* input_struct){
   sMicrowave * local_struct = (sMicrowave *) input_struct;
 
-  Serial.println(local_struct->door);
-  Serial.println(local_struct->lamp);
+  if (local_struct->door == 0 && local_struct->door == 0){
+    Serial.println("Door is closed and light is off!");
+  }
 
   // Printing program effect
   Serial.print("Effect set to: ");
