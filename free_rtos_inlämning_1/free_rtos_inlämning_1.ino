@@ -3,6 +3,7 @@
 #include "queue.h"
 #include "timers.h"
 
+
 // Creating struct for the microwave with it's members
 typedef struct {
   uint32_t prog_lenght_ms;      // Length of the program
@@ -24,31 +25,46 @@ void setup() {
   Serial.begin(9600);
 
   // Creating our tasks
-  xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, NULL);
-  xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, NULL);
+  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, NULL);
+  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, NULL);
   xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, NULL);
 }
 
 void microwave_output(void* input_struct){
   sMicrowave * local_struct = (sMicrowave *) input_struct;
 
-  if (local_struct->door == 0 && local_struct->door == 0){
-    Serial.println("Door is closed and light is off!");
-  }
-
   // Printing program effect
   Serial.print("Effect set to: ");
   Serial.println(local_struct->effect_of_heater);
 
-  Serial.println(local_struct->prog_lenght_ms);
-  
-  // Disc spin calculation
-  Serial.println(local_struct->disc_spin);
-  local_struct->disc_spin += 30;                  // += 30 for 30 degrees/s
-  if (local->disc_spin >= 360) {
-    local_struct->disc_spin = 0;
+  if (local_struct->door == 0 && local_struct->door == 0){
+    Serial.println("Door is closed and light is off!");
   }
-  vTaskDelay(PRINT_DELAY);
+
+  float prog_length_sec = (local_struct->prog_lenght_ms / 1000); // Calculate program to seconds
+  if (prog_length_sec >= 60) {                                   // If the program is 1 min or longer display it as minutes
+    Serial.print("Program length is set to: ");
+    Serial.print(prog_length_sec);
+    Serial.println(" minutes.");
+  }
+  else {                                                        // If the program is less than 60 sec, display it as secnds
+
+    Serial.print("Program length is set to: ");
+    Serial.print(prog_length_sec, 0);                           // (prog_length_sec, 0) to remove de decimals to make it cleaner
+    Serial.println(" seconds.");
+  }
+
+  while (local_struct->prog_lenght_ms != 0) {
+    local_struct->prog_lenght_ms -= PRINT_DELAY;
+    // Disc spin calculation
+    Serial.print("Disc is at: ");
+    Serial.println(local_struct->disc_spin);
+    local_struct->disc_spin += 30;                              // += 30 for 30 degrees/s
+    if (local_struct->disc_spin >= 360) {
+      local_struct->disc_spin = 0;
+    }
+    vTaskDelay(PRINT_DELAY);
+  }
 }
 
 void loop() {}
