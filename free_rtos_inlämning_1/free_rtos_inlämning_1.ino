@@ -46,36 +46,46 @@ void setup() {
 
 void microwave_output(void* input_struct){
   sMicrowave * local_struct = (sMicrowave *) input_struct;
-  bChoice = true;
+  vTaskDelay(PRINT_DELAY);
+  
   // Menu for input to chose program
   while(bChoice == true){
-    menu_choice();
+    Serial.println("Choose program: ");
+    Serial.println("1. Defrost meat");
+    Serial.println("2. Defrost veggies");
+    Serial.println("3. General 30s");
     while (Serial.available() == 0) {} // Wait for User to Input Data
     prog_choice = Serial.parseInt();
+    Serial.print("You chose: ");
+    Serial.println(prog_choice);
     switch(prog_choice){
-    case 1:
-      Serial.println("Program one will start");
-      vTaskSuspend(defrost_veg_Handle);
-      vTaskSuspend(general_prog_Handle);
-      bChoice = false;
-      break;
-    case 2:
-      Serial.println("Program one will start");
-      vTaskSuspend(defrost_meat_Handle);
-      vTaskSuspend(general_prog_Handle);
-      bChoice = false;
-      break;
-    case 3:
-      Serial.println("Program one will start");
-      vTaskSuspend(defrost_meat_Handle);
-      vTaskSuspend(defrost_veg_Handle);
-      bChoice = false;
-      break;
-    default:
-      Serial.println("Invalid input!");
-      break;
-  } // Switch
-} // While bChoice
+      case 1:
+        Serial.println("Program one will start");
+        vTaskResume(defrost_meat_Handle);
+        vTaskSuspend(defrost_veg_Handle);
+        vTaskSuspend(general_prog_Handle);
+        bChoice = false;
+        break;
+      case 2:
+        Serial.println("Program two will start");
+        vTaskResume(defrost_veg_Handle);
+        vTaskSuspend(defrost_meat_Handle);
+        vTaskSuspend(general_prog_Handle);
+        bChoice = false;
+        break;
+      case 3:
+        Serial.println("Program three will start");
+        vTaskResume(general_prog_Handle);
+        vTaskSuspend(defrost_meat_Handle);
+        vTaskSuspend(defrost_veg_Handle);
+        bChoice = false;
+        break;
+      default:
+        Serial.println("Invalid input!");
+        bChoice = true;
+        break;
+    } // Switch
+  } // While bChoice
 
   // Printing program effect
   Serial.print("Effect set to: ");
@@ -120,17 +130,9 @@ void microwave_output(void* input_struct){
     }
     if(local_struct->prog_length_s == 0){
       Serial.println("PROGRAM DONE!");
-      vTaskSuspend();
     }
     vTaskDelay(PRINT_DELAY);
   }
-}
-
-void menu_choice(){
-  Serial.println("Choose program: ");
-  Serial.println("1. Defrost meat");
-  Serial.println("2. Defrost veggies");
-  Serial.println("General 30s");
 }
 
 void loop() {}
