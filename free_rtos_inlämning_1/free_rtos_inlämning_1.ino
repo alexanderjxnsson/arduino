@@ -32,19 +32,21 @@ bool bChoice = true;
 uint8_t prog_choice;
 
 void setup() {
+  // Setup for Serial and pins
   Serial.begin(9600);
   pinMode(RED_PIN, OUTPUT);
   pinMode(YELLOW_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
 
   // Creating our tasks
-  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
-  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
+  xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
+  xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
   xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, &general_prog_Handle);
 }
 
 void microwave_output(void* input_struct){
   sMicrowave * local_struct = (sMicrowave *) input_struct;
+  bChoice = true;
   // Menu for input to chose program
   while(bChoice == true){
     menu_choice();
@@ -53,14 +55,20 @@ void microwave_output(void* input_struct){
     switch(prog_choice){
     case 1:
       Serial.println("Program one will start");
+      vTaskSuspend(defrost_veg_Handle);
+      vTaskSuspend(general_prog_Handle);
       bChoice = false;
       break;
     case 2:
       Serial.println("Program one will start");
+      vTaskSuspend(defrost_meat_Handle);
+      vTaskSuspend(general_prog_Handle);
       bChoice = false;
       break;
     case 3:
       Serial.println("Program one will start");
+      vTaskSuspend(defrost_meat_Handle);
+      vTaskSuspend(defrost_veg_Handle);
       bChoice = false;
       break;
     default:
@@ -112,14 +120,13 @@ void microwave_output(void* input_struct){
     }
     if(local_struct->prog_length_s == 0){
       Serial.println("PROGRAM DONE!");
-      //vTaskSuspend();
+      vTaskSuspend();
     }
     vTaskDelay(PRINT_DELAY);
   }
 }
 
 void menu_choice(){
-  uint8_t prog_choice;
   Serial.println("Choose program: ");
   Serial.println("1. Defrost meat");
   Serial.println("2. Defrost veggies");
