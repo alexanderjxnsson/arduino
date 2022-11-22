@@ -18,7 +18,7 @@ typedef struct {
 } sMicrowave;
 
 // Creating task handle for the different programs
-TaskHandle_t defrost_meat_Handle, defrost_veg_Handle, general_prog_Handle;
+TaskHandle_t defrost_meat_Handle, defrost_veg_Handle, general_prog_Handle, menu_Handle;
 
 #define PRINT_DELAY (pdMS_TO_TICKS(1000)) // Delay set to 1000ms(1sec), easier to calculate disc spin degree.
 
@@ -33,19 +33,16 @@ uint8_t prog_choice;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(RED_PIN, OUTPUT);
-  pinMode(YELLOW_PIN, OUTPUT);
-  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(RED_PIN, OUTPUT);     // Red light represents door open
+  pinMode(YELLOW_PIN, OUTPUT);  // Yellow light represents lamp on
+  pinMode(GREEN_PIN, OUTPUT);   // Green light represents program done
 
-  // Creating our tasks
-  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
-  //xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
-  xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, &general_prog_Handle);
+  // Creating our first task for menu and chosing program
+  xTaskCreate(choose_program, "Function for chosing program", 128, NULL, 1, &menu_Handle);
 }
 
-void microwave_output(void* input_struct){
-  sMicrowave * local_struct = (sMicrowave *) input_struct;
-  // Menu for input to chose program
+void choose_program(void * param){
+    // Menu for input to chose program
   while(bChoice == true){
     menu_choice();
     while (Serial.available() == 0) {} // Wait for User to Input Data
@@ -53,26 +50,35 @@ void microwave_output(void* input_struct){
     switch(prog_choice){
     case 1:
       Serial.println("Program one will start");
-      bChoice = false;
+      xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
+      vTaskSuspend(menu_Handle);
       break;
     case 2:
       Serial.println("Program one will start");
-      bChoice = false;
+      xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
+      vTaskSuspend(menu_Handle);
       break;
     case 3:
       Serial.println("Program one will start");
-      bChoice = false;
+      xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, &general_prog_Handle);
+      vTaskSuspend(menu_Handle);
       break;
     default:
       Serial.println("Invalid input!");
       break;
-  } // Switch
-} // While bChoice
+    } // Switch
+  } // While bChoice
+} // Function
+
+void microwave_output(void* input_struct){
+  sMicrowave * local_struct = (sMicrowave *) input_struct;
 
   // Printing program effect
   Serial.print("Effect set to: ");
   Serial.println(local_struct->effect_of_heater);
-
+  /*  Write code for door open, lamp on.
+      Door closed and lamp on.
+      When program is done door open, lamp on till door is closed again. */
   if (local_struct->door == 0 && local_struct->door == 0){
     Serial.println("Door is closed and light is off!");
   }
@@ -85,12 +91,12 @@ void microwave_output(void* input_struct){
   if (local_struct->prog_length_s >= 60) {                      // If the program is 1 min or longer display it as minutes
     Serial.print("Program length is set to: ");
     Serial.print(prog_h); Serial.print(":");  Serial.print(prog_m); Serial.print(":");  Serial.println(prog_s);
-  }
+  } // If
   else {                                                        // If the program is less than 60 sec, display it as secnds
     Serial.print("Program length is set to: ");
     Serial.print(local_struct->prog_length_s);
     Serial.println(" seconds.");
-  }
+  } // Else
 
   while (local_struct->prog_length_s != 0) {
     // Time calculations within the while loop to represent countdown timer
@@ -110,9 +116,9 @@ void microwave_output(void* input_struct){
     if (local_struct->disc_spin >= 360) {
       local_struct->disc_spin = 0;
     }
-    if(local_struct->prog_length_s == 0){
+    if(local_struct->prog_length_s == 0){                       // When prog_length reach 0 we exit the while loop
       Serial.println("PROGRAM DONE!");
-      //vTaskSuspend();
+      vTaskSuspend(TaskHandle_t xTaskToSuspend)
     }
     vTaskDelay(PRINT_DELAY);
   }
@@ -123,7 +129,7 @@ void menu_choice(){
   Serial.println("Choose program: ");
   Serial.println("1. Defrost meat");
   Serial.println("2. Defrost veggies");
-  Serial.println("General 30s");
+  Serial.println("3. General 30s");
 }
 
 void loop() {}
