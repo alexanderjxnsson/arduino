@@ -24,7 +24,7 @@ TaskHandle_t defrost_meat_Handle, defrost_veg_Handle, general_prog_Handle, menu_
 
 // Here we've initilaized the different programs of the microwave from the struct
 // First we add program time in seconds, door, lamp, effect and then disc
-sMicrowave defrost_meat = {180, 0, 0, 800, 0};
+sMicrowave defrost_meat = {300, 0, 0, 800, 0};
 sMicrowave defrost_veg = {60, 0, 0, 400, 0};
 sMicrowave general_prog = {30, 0, 0, 800, 0};
 
@@ -39,6 +39,7 @@ void setup() {
 
   // Creating our first task for menu and chosing program
   xTaskCreate(choose_program, "Function for chosing program", 128, NULL, 1, &menu_Handle);
+  // Check creation of task, if not created loop
 }
 
 void choose_program(void * param){
@@ -51,6 +52,7 @@ void choose_program(void * param){
     case 1:
       Serial.println("Program one will start");
       xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
+      // Check creation of task, if not created loop. On all here.
       vTaskSuspend(menu_Handle);
       break;
     case 2:
@@ -115,14 +117,15 @@ void microwave_output(void* input_struct){
     local_struct->disc_spin += 30;                              // += 30 for 30 degrees/s
     if (local_struct->disc_spin >= 360) {
       local_struct->disc_spin = 0;
-    }
+    } // If
     if(local_struct->prog_length_s == 0){                       // When prog_length reach 0 we exit the while loop
       Serial.println("PROGRAM DONE!");
-      vTaskSuspend(TaskHandle_t xTaskToSuspend)
-    }
+      vTaskResume(menu_Handle);
+      vTaskDelete();
+    } // If
     vTaskDelay(PRINT_DELAY);
-  }
-}
+  } // While
+} // Function
 
 void menu_choice(){
   uint8_t prog_choice;
