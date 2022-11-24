@@ -27,7 +27,7 @@ void m1Writer(void *  par){
       Serial.println("[1] MSG 1");
       // Give semaphore
       xSemaphoreGive(bSemaphore);
-      vTaskDelay(pdMS_TO_TICKS(200));
+      vTaskDelay(pdMS_TO_TICKS(500));
     } // If
     else{
       Serial.println("! Fail 1!");
@@ -45,7 +45,7 @@ void m2Writer(void * par){
       Serial.println("[2] MSG 2");
       // Give semaphore
       xSemaphoreGive(bSemaphore);
-      vTaskDelay(pdMS_TO_TICKS(200));
+      vTaskDelay(pdMS_TO_TICKS(500));
     } // If
     else{
       Serial.println("! Fail 2!");
@@ -63,7 +63,7 @@ void m3Writer(void * par){
       Serial.println("[3] MSG 3");
       // Give semaphore
       xSemaphoreGive(bSemaphore);
-      vTaskDelay(pdMS_TO_TICKS(200));
+      vTaskDelay(pdMS_TO_TICKS(500));
     } // If
     else{
       Serial.println("! Fail 3!");

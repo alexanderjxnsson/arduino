@@ -2,6 +2,7 @@
 #include <Arduino_FreeRTOS.h>
 #include "queue.h"
 #include "timers.h"
+#include "semphr.h"
 
 // Defining LED pins
 #define RED_PIN     6
@@ -33,62 +34,58 @@ uint8_t prog_choice;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(RED_PIN, OUTPUT);     // Red light represents door open
+  pinMode(RED_PIN, OUTPUT);     // Red light represents heater
   pinMode(YELLOW_PIN, OUTPUT);  // Yellow light represents lamp on
   pinMode(GREEN_PIN, OUTPUT);   // Green light represents program done
 
   // Creating our first task for menu and chosing program
   xTaskCreate(choose_program, "Function for chosing program", 128, NULL, 1, &menu_Handle);
-  // Check creation of task, if not created loop
+  menu_choice();
 }
 
 void choose_program(void * param){
-    // Menu for input to chose program
+  // Menu for input to chose program
   while(bChoice == true){
-    menu_choice();
+    vTaskDelay(PRINT_DELAY);
     while (Serial.available() == 0) {} // Wait for User to Input Data
-    prog_choice = Serial.parseInt();
-    switch(prog_choice){
-    case 1:
-      Serial.println("Program one will start");
-      xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
-      // Check creation of task, if not created loop. On all here.
-      vTaskSuspend(menu_Handle);
-      break;
-    case 2:
-      Serial.println("Program one will start");
-      xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
-      vTaskSuspend(menu_Handle);
-      break;
-    case 3:
-      Serial.println("Program one will start");
-      xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, &general_prog_Handle);
-      vTaskSuspend(menu_Handle);
-      break;
-    default:
-      Serial.println("Invalid input!");
-      break;
-    } // Switch
+      prog_choice = Serial.parseInt();
+      switch(prog_choice){
+        case 1:
+          Serial.println("Program one will start");
+          xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_meat, 1, &defrost_meat_Handle);
+          break;
+        case 2:
+          Serial.println("Program two will start");
+          xTaskCreate(microwave_output, "Display microwave output", 128, &defrost_veg, 1, &defrost_veg_Handle);
+          break;
+        case 3:
+          Serial.println("Program three will start");
+          xTaskCreate(microwave_output, "Display microwave output", 128, &general_prog, 1, &general_prog_Handle);
+          break;
+        default:
+          Serial.println("Invalid input!");
+          break;
+      } // Switch
+      prog_choice = Serial.read();
   } // While bChoice
 } // Function
 
 void microwave_output(void* input_struct){
   sMicrowave * local_struct = (sMicrowave *) input_struct;
+  //vTaskSuspend(menu_Handle);
+
+  /*  Write code for door open, lamp on.
+    Door closed and lamp on.
+    When program is done door open, lamp on till door is closed again. */
 
   // Printing program effect
   Serial.print("Effect set to: ");
   Serial.println(local_struct->effect_of_heater);
-  /*  Write code for door open, lamp on.
-      Door closed and lamp on.
-      When program is done door open, lamp on till door is closed again. */
-  if (local_struct->door == 0 && local_struct->door == 0){
-    Serial.println("Door is closed and light is off!");
-  }
 
   // Initalizing variables for clock timer
   uint8_t prog_h = (local_struct->prog_length_s / 3600); 
-	uint8_t prog_m = (local_struct->prog_length_s - (3600 * prog_h)) /60;
-	uint8_t prog_s = (local_struct->prog_length_s - (3600 * prog_h) - (prog_m * 60));
+  uint8_t prog_m = (local_struct->prog_length_s - (3600 * prog_h)) /60;
+  uint8_t prog_s = (local_struct->prog_length_s - (3600 * prog_h) - (prog_m * 60));
 
   if (local_struct->prog_length_s >= 60) {                      // If the program is 1 min or longer display it as minutes
     Serial.print("Program length is set to: ");
@@ -103,8 +100,8 @@ void microwave_output(void* input_struct){
   while (local_struct->prog_length_s != 0) {
     // Time calculations within the while loop to represent countdown timer
     prog_h = (local_struct->prog_length_s / 3600); 
-	  prog_m = (local_struct->prog_length_s - (3600 * prog_h)) /60;
-	  prog_s = (local_struct->prog_length_s - (3600 * prog_h) - (prog_m * 60));
+    prog_m = (local_struct->prog_length_s - (3600 * prog_h)) /60;
+    prog_s = (local_struct->prog_length_s - (3600 * prog_h) - (prog_m * 60));
     local_struct->prog_length_s -= 1;
 
     // Print time remaining
@@ -120,15 +117,14 @@ void microwave_output(void* input_struct){
     } // If
     if(local_struct->prog_length_s == 0){                       // When prog_length reach 0 we exit the while loop
       Serial.println("PROGRAM DONE!");
-      vTaskResume(menu_Handle);
-      vTaskDelete();
+      menu_choice();
     } // If
     vTaskDelay(PRINT_DELAY);
   } // While
-} // Function
+}// Function
 
 void menu_choice(){
-  uint8_t prog_choice;
+  Serial.println(" ");
   Serial.println("Choose program: ");
   Serial.println("1. Defrost meat");
   Serial.println("2. Defrost veggies");
