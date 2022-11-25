@@ -16,7 +16,6 @@ typedef struct {
 TaskHandle_t defrost_meat_Handle, defrost_veg_Handle, general_prog_Handle, menu_Handle, heater_Handle, lamp_Handle, disc_Handle;
 
 #define PRINT_DELAY (pdMS_TO_TICKS(1000)) // Delay set to 1000ms(1sec)
-#define PROG_DELAY (pdMS_TO_TICKS(500)) // Delay set to 1000ms(1sec)
 
 // Here we've initilaized the different programs of the microwave from the struct
 // First we add program time in seconds, door, lamp, effect and then disc
