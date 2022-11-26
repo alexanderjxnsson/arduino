@@ -4,7 +4,6 @@
 // Defining LED pins
 #define RED_PIN     6
 #define YELLOW_PIN  7
-#define GREEN_PIN   8
 
 // Creating struct for the microwave with it's members
 typedef struct {
@@ -13,7 +12,7 @@ typedef struct {
 } sMicrowave;
 
 // Here we've initilaized the different programs of the microwave from the struct
-// First we add program time in seconds, door, lamp, effect and then disc
+// First we add program time in seconds and then effect
 sMicrowave defrost_meat = {300, 800};
 sMicrowave defrost_veg = {60, 400};
 sMicrowave general_prog = {30, 800};
@@ -21,17 +20,22 @@ sMicrowave general_prog = {30, 800};
 #define PRINT_DELAY (pdMS_TO_TICKS(1000)) // Delay set to 1000ms(1sec)
 bool bLamp = true, bHeater = true, bDoor;
 TaskHandle_t heater_Handle, lamp_Handle, disc_Handle, door_Handle;
+
+// Change this variable to simulate door open or closed
+// 1 = Door closed
+// 0 = Door open
 uint8_t door_open_or_close = 1;
 
 void setup() {
   Serial.begin(9600);
   pinMode(RED_PIN, OUTPUT);     // Red light represents heater
   pinMode(YELLOW_PIN, OUTPUT);  // Yellow light represents lamp on
-  pinMode(GREEN_PIN, OUTPUT);   // Green light represents door open
 
   // Creating our first task for menu and chosing program
   xTaskCreate(door, "Main task to trigger the others", 128, door_open_or_close, 1, &door_Handle);
   xTaskCreate(lamp, "Lamp task", 128, NULL, 1, &lamp_Handle);
+
+  // Change struct to simulate different programs
   xTaskCreate(disc, "Disc task calculation", 128, &general_prog, 1, &disc_Handle);
   xTaskCreate(heater, "Heater task", 128, &general_prog, 1, &heater_Handle);
 }
@@ -39,18 +43,18 @@ void setup() {
 void door(void * param){
   uint8_t door_status = (uint8_t)param;
   while (1) {
-    if (door_status == 1) {
+    if (door_status == 1) { // Door closed
       bLamp = true;
       Serial.println("Door closed");
       vTaskDelay(PRINT_DELAY);
       vTaskSuspend(NULL);
     }
-    else if(door_status == 0){
+    else if(door_status == 0){ // Door open
       Serial.println("Door is open");
       vTaskSuspend(disc_Handle);
       vTaskSuspend(heater_Handle);
       vTaskDelay(PRINT_DELAY);
-      bLamp = true;
+      bLamp = false;
     }
   }
 }
@@ -125,7 +129,9 @@ void disc(void * input_struct){
       vTaskDelay(PRINT_DELAY);
       Serial.println("We open door");
       vTaskDelay(PRINT_DELAY);
+      vTaskDelay(PRINT_DELAY);
       Serial.println("Take out the food");
+      vTaskDelay(PRINT_DELAY);
       vTaskDelay(PRINT_DELAY);
       Serial.println("Close the door");
       bLamp = false;
