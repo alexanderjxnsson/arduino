@@ -30,25 +30,23 @@ typedef struct {
 sCar car_one = {true, 90, 2500, false, 50.03};
 sCar car_two = {true, 90, 2500, true, 9.3};
 
-const char* vent_string_ok[] = {"Ventilation is ok"};
-const char* vent_string_error[] = {"x02:Error: Vent"};
-const char* fuel_string_good[] = {"0x4: good fuel"};
-const char* fuel_string_low[] = {"0x3: low fuel"};
+static const char* vent_string[] = {"x02: Error: Vent", "Ventilation is ok"};
+static const char* fuel_string[] = {"0x3: low fuel", "0x4: good fuel"};
 
 void mutex_print(const char* printout);
 
 void setup() {
   Serial.begin(9600);
 
-  iQueue1 = xQueueCreate(2, sizeof(uint32_t));
-  iQueue2 = xQueueCreate(2, sizeof(uint32_t));
-  iQueueSet = xQueueCreateSet(5+5+1);
+  iQueue1 = xQueueCreate(2, sizeof(char*));
+  iQueue2 = xQueueCreate(2, sizeof(char*));
+  iQueueSet = xQueueCreateSet(2+2+1);
   xQueueAddToSet(iQueue1, iQueueSet);
   xQueueAddToSet(iQueue2, iQueueSet);
 
   xTaskCreate(fuel_task, "Fuel task", 128, &car_one, 1, NULL);
   xTaskCreate(ventilation_task, "Ventilation task", 128, &car_one, 1, NULL);
-  xTaskCreate(motor_controller_embedded_board, "motor controller embedded board", 128, &car_one, 1, NULL);
+  xTaskCreate(mceb, "motor controller embedded board", 128, &car_one, 1, NULL);
 }
 
 void fuel_task(void* input_struct){
@@ -58,7 +56,7 @@ void fuel_task(void* input_struct){
   while (1) {
     Serial.println("Checking fuel");
     if(local_struct->fuel_status >= 10){
-      qStatus = xQueueSend(iQueue1, &fuel_string_good, portMAX_DELAY);
+      qStatus = xQueueSend(iQueue1, &(fuel_string[1]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("h$h$");
       }
@@ -67,7 +65,7 @@ void fuel_task(void* input_struct){
       }
     }
     else if(local_struct->fuel_status < 10){
-      qStatus = xQueueSend(iQueue1, &fuel_string_low, portMAX_DELAY);
+      qStatus = xQueueSend(iQueue1, &(fuel_string[0]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("U$U$");
       }
@@ -82,11 +80,11 @@ void fuel_task(void* input_struct){
 void ventilation_task(void* input_struct){
   sCar * local_struct = (sCar *) input_struct;
   BaseType_t qStatus;
-
+  
   while (1) {
+    Serial.println("Checking vent");
     if (local_struct->vent_status == true) {
-      
-      qStatus = xQueueSend(iQueue2, &vent_string_error, portMAX_DELAY);
+      qStatus = xQueueSend(iQueue2, &(vent_string[0]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("N*N*");
       }
@@ -95,7 +93,7 @@ void ventilation_task(void* input_struct){
       }
     }
     else if (local_struct->vent_status == false) {
-      qStatus = xQueueSend(iQueue2, &vent_string_ok, portMAX_DELAY);
+      qStatus = xQueueSend(iQueue2, &(vent_string[1]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("Y*Y*");
       }
@@ -107,7 +105,7 @@ void ventilation_task(void* input_struct){
   } // while
 } // function
 
-void motor_controller_embedded_board(void* input_struct){
+void mceb(void* input_struct){
   sCar * local_struct = (sCar *) input_struct;
   char * msg;
   QueueHandle_t activeQueue;
