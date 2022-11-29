@@ -38,6 +38,8 @@ void mutex_print(const char* printout);
 void setup() {
   Serial.begin(9600);
 
+  xMutex = xSemaphoreCreateMutex();
+
   iQueue1 = xQueueCreate(2, sizeof(char*));
   iQueue2 = xQueueCreate(2, sizeof(char*));
   iQueueSet = xQueueCreateSet(2+2+1);
@@ -54,14 +56,14 @@ void fuel_task(void* input_struct){
   BaseType_t qStatus;
 
   while (1) {
-    Serial.println("Checking fuel");
+    mutex_print("Checking fuel");
     if(local_struct->fuel_status >= 10){
       qStatus = xQueueSend(iQueue1, &(fuel_string[1]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("h$h$");
       }
       else{
-        Serial.println("FAILED TO SEND FUEL");
+        mutex_print("FAILED TO SEND FUEL");
       }
     }
     else if(local_struct->fuel_status < 10){
@@ -70,7 +72,7 @@ void fuel_task(void* input_struct){
         mutex_print("U$U$");
       }
       else{
-        Serial.println("FAILED TO SEND FUEL");
+        mutex_print("FAILED TO SEND FUEL");
       }
     }
     vTaskDelay(xTickToWait);
@@ -82,14 +84,14 @@ void ventilation_task(void* input_struct){
   BaseType_t qStatus;
   
   while (1) {
-    Serial.println("Checking vent");
+    mutex_print("Checking vent");
     if (local_struct->vent_status == true) {
       qStatus = xQueueSend(iQueue2, &(vent_string[0]), portMAX_DELAY);
       if(qStatus == pdPASS){
         mutex_print("N*N*");
       }
       else{
-        Serial.println("FAILED TO SEND VENT");
+        mutex_print("FAILED TO SEND VENT");
       }
     }
     else if (local_struct->vent_status == false) {
@@ -98,7 +100,7 @@ void ventilation_task(void* input_struct){
         mutex_print("Y*Y*");
       }
       else{
-        Serial.println("FAILED TO SEND VENT");
+        mutex_print("FAILED TO SEND VENT");
       }
     }
     vTaskDelay(xTickToWait);
@@ -114,16 +116,14 @@ void mceb(void* input_struct){
   while(1){
     activeQueue = (QueueHandle_t)xQueueSelectFromSet(iQueueSet, portMAX_DELAY);
     qStatus = xQueueReceive(activeQueue, &msg, portMAX_DELAY);
-    Serial.println("Checking motor");
-    switch (local_struct->engine_status) {
-      case 0:
-        Serial.println("x01:Error: M.||Gb.");
-        break;
-      case 1:
-        Serial.println("Motor is OK");
-        break;
-      Serial.println(msg);
-    } // if
+    mutex_print("Checking motor");
+    if (local_struct->engine_status == true) {
+      mutex_print("Motor is OK");
+    }
+    else if (local_struct->engine_status == false) {
+      mutex_print("x01:Error: M.||Gb.");
+    }
+    mutex_print(msg);
     vTaskDelay(xTickToWait);
   } // while
 } // function
