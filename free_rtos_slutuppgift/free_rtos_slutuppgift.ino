@@ -24,10 +24,10 @@ TickType_t xTickToWait = pdMS_TO_TICKS(1000);
 
 // Creating struct for car parts and status
 typedef struct {
-  uint8_t engine_status;    // 1 if it works, 0 if broken
+  bool engine_status;    // true if it works, false if broken
   uint8_t speed;
   uint16_t RPM;
-  uint8_t vent_status;      // 1 if it works, 0 if broken
+  bool vent_status;      // true if it works, false if broken
   float fuel_status;
 } sCar;
 
@@ -74,16 +74,16 @@ void fuel_task(void* input_struct){
     if(local_struct->fuel_status >= 10){
       qStatus = xQueueSend(iQueue1, &(fuel_string[1]), portMAX_DELAY);
       if(qStatus == pdPASS){
-        mutex_println("h$h$");
+        mutex_print("h$h$");
       }
       else{mutex_print("FAILED TO SEND FUEL");}
     }
     else if(local_struct->fuel_status < 10){
       qStatus = xQueueSend(iQueue1, &(fuel_string[0]), portMAX_DELAY);
       if(qStatus == pdPASS){
-        mutex_println("U$U$");
+        mutex_print("U$U$");
       }
-      else{mutex_println("FAILED TO SEND FUEL");}
+      else{mutex_print("FAILED TO SEND FUEL");}
     }
     vTaskDelay(xTickToWait);
   } // while
@@ -95,17 +95,17 @@ void ventilation_task(void* input_struct){
   
   while (1) {
     mutex_print("Checking vent: ");
-    if (local_struct->vent_status == true) {
+    if (local_struct->vent_status == false) {
       qStatus = xQueueSend(iQueue2, &(vent_string[0]), portMAX_DELAY);
       if(qStatus == pdPASS){
-        mutex_println("Y*Y*");
+        mutex_print("N*N*");
       }
       else{mutex_print("FAILED TO SEND VENT");}
     }
-    else if (local_struct->vent_status == false) {
+    else if (local_struct->vent_status == true) {
       qStatus = xQueueSend(iQueue2, &(vent_string[1]), portMAX_DELAY);
       if(qStatus == pdPASS){
-        mutex_println("N*N*");
+        mutex_print("Y*Y*");
       }
       else{mutex_print("FAILED TO SEND VENT");}
     }
@@ -122,14 +122,14 @@ void mceb(void* input_struct){
   while(1){
     activeQueue = (QueueHandle_t)xQueueSelectFromSet(iQueueSet, portMAX_DELAY);
     qStatus = xQueueReceive(activeQueue, &msg, portMAX_DELAY);
-    mutex_print("Checking motor");
+    mutex_print("Checking motor: ");
     if (local_struct->engine_status == true) {
-      mutex_println("Motor is OK");
+      mutex_print("Motor is OK");
     }
     else if (local_struct->engine_status == false) {
-      mutex_println("x01:Error: M.||Gb.");
+      mutex_print("x01:Error: M.||Gb.");
     }
-    mutex_println(msg);
+    mutex_print(msg);
     mutex_print("Gas level: ");
     mutex_print_float(local_struct->fuel_status);
     mutex_print("RPM: ");
@@ -141,12 +141,6 @@ void mceb(void* input_struct){
 } // function
 
 void mutex_print(const char* printout){
-  xSemaphoreTake(xMutex, xTickToWait);
-  Serial.print(printout);
-  xSemaphoreGive(xMutex);
-}
-
-void mutex_println(const char* printout){
   xSemaphoreTake(xMutex, xTickToWait);
   Serial.println(printout);
   xSemaphoreGive(xMutex);
