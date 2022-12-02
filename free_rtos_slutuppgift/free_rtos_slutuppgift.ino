@@ -27,7 +27,7 @@ TickType_t xTickToWait = pdMS_TO_TICKS(1000);
 
 // Creating struct for car parts and status
 typedef struct {
-  bool engine_gearbox_status;    // true if it works, false if broken
+  bool motor_gearbox_status;    // true if it works, false if broken
   uint8_t speed;
   uint16_t RPM;
   bool vent_status;             // true if it works, false if broken
@@ -131,13 +131,12 @@ void mceb(void* input_struct){
     activeQueue = (QueueHandle_t)xQueueSelectFromSet(iQueueSet, portMAX_DELAY);
     qStatus = xQueueReceive(activeQueue, &msg, portMAX_DELAY);
     mutex_print("Checking motor: ");
-    if (local_struct->engine_gearbox_status == true) {
+    if (local_struct->motor_gearbox_status == true) {
       mutex_print("M.G is OK");
     }
-    else if (local_struct->engine_gearbox_status == false) {
+    else if (local_struct->motor_gearbox_status == false) {
       mutex_print("x01:Error: M.||Gb.");
     }
-    mutex_print("External message: ");
     mutex_print(msg);
     mutex_print("Gas level: ");
     mutex_print_float(local_struct->fuel_status);
@@ -150,19 +149,19 @@ void mceb(void* input_struct){
 } // function
 
 void mutex_print(const char* printout){
-  xSemaphoreTake(xMutex, xTickToWait);
+  xSemaphoreTake(xMutex, portMAX_DELAY);
   Serial.println(printout);
   xSemaphoreGive(xMutex);
 }
 
 void mutex_print_int(int printout){
-  xSemaphoreTake(xMutex, xTickToWait);
+  xSemaphoreTake(xMutex, portMAX_DELAY);
   Serial.println(printout);
   xSemaphoreGive(xMutex);
 }
 
 void mutex_print_float(float printout){
-  xSemaphoreTake(xMutex, xTickToWait);
+  xSemaphoreTake(xMutex, portMAX_DELAY);
   Serial.println(printout);
   xSemaphoreGive(xMutex);
 }
