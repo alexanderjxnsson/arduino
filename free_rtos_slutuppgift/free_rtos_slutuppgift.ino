@@ -1,6 +1,8 @@
-/*  1. Que or queset, struct
-    2. Mutex
-    3. Outputs */
+/*  1.  Körde queueset med två köer, en för vent och en för fuel som mceb tar emot.
+        Jag avnände mig av en struct för att representera delarna av motorn.
+    2.  Använde mig av mutex som shared dashboard för outputs.
+    3.  Byt ut car_one till car_two för att ändra scenario
+*/
 
 // Including libraries
 #include <Arduino_FreeRTOS.h>
@@ -25,14 +27,15 @@ TickType_t xTickToWait = pdMS_TO_TICKS(1000);
 
 // Creating struct for car parts and status
 typedef struct {
-  bool engine_status;    // true if it works, false if broken
+  bool engine_gearbox_status;    // true if it works, false if broken
   uint8_t speed;
   uint16_t RPM;
-  bool vent_status;      // true if it works, false if broken
+  bool vent_status;             // true if it works, false if broken
   float fuel_status;
 } sCar;
 
 // Created car scenarios out of the struct
+//              M.G, Speed, RPM, Vent, Fuel
 sCar car_one = {true, 90, 2500, false, 50.03};
 sCar car_two = {true, 90, 2500, true, 9.3};
 
@@ -128,10 +131,10 @@ void mceb(void* input_struct){
     activeQueue = (QueueHandle_t)xQueueSelectFromSet(iQueueSet, portMAX_DELAY);
     qStatus = xQueueReceive(activeQueue, &msg, portMAX_DELAY);
     mutex_print("Checking motor: ");
-    if (local_struct->engine_status == true) {
+    if (local_struct->engine_gearbox_status == true) {
       mutex_print("M.G is OK");
     }
-    else if (local_struct->engine_status == false) {
+    else if (local_struct->engine_gearbox_status == false) {
       mutex_print("x01:Error: M.||Gb.");
     }
     mutex_print("External message: ");
