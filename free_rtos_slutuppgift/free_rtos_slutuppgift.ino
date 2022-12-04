@@ -49,9 +49,9 @@ void setup() {
   
   // Setting up pin modes
   pinMode(RED_PIN, OUTPUT);     // Red light for low gas
-  pinMode(YELLOW_PIN, OUTPUT);  // Yellow light for bad vent
   pinMode(GREEN_PIN, OUTPUT);   // Green light for good gas
-  pinMode(BLUE_PIN, OUTPUT);    // Blue light for good gas
+  pinMode(YELLOW_PIN, OUTPUT);  // Yellow light for bad vent
+  pinMode(BLUE_PIN, OUTPUT);    // Blue light for good vent
 
   // Setting xSemaphoreCreateMutex to xMutex
   xMutex = xSemaphoreCreateMutex();
@@ -64,9 +64,9 @@ void setup() {
   xQueueAddToSet(iQueue2, iQueueSet);
 
   // Creating our tasks and use our struct as value
-  xTaskCreate(mceb, "motor controller embedded board", 128, &car_one, 1, NULL);
-  xTaskCreate(fuel_task, "Fuel task", 128, &car_one, 1, NULL);
-  xTaskCreate(ventilation_task, "Ventilation task", 128, &car_one, 1, NULL);
+  xTaskCreate(mceb, "motor controller embedded board", 128, &car_two, 1, NULL);
+  xTaskCreate(fuel_task, "Fuel task", 128, &car_two, 1, NULL);
+  xTaskCreate(ventilation_task, "Ventilation task", 128, &car_two, 1, NULL);
 }
 
 void fuel_task(void* input_struct){
