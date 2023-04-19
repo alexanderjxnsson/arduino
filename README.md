@@ -1,2 +1,2 @@
 # arduino
-- FreeRTOS from school
+- FreeRTOS assignments and practice from school
